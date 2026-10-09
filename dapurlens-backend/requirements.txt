@@ -4,5 +4,5 @@ sqlalchemy
 psycopg2-binary
 bcrypt<4.1
 pyjwt
-anthropic
+google-genai
 python-multipart
