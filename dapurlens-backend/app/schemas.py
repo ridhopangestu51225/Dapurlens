@@ -84,3 +84,16 @@ class RecognitionResultOut(BaseModel):
     food_id: Optional[int]
     confidence_score: Optional[float]
     candidates: list[RecognitionCandidateOut] = []
+
+class RecognitionCandidateOut(BaseModel):
+    slug: str
+    name: str
+    confidence: float
+
+
+class RecognitionOut(BaseModel):
+    matched: bool
+    food: Optional[FoodOut] = None
+    confidence: float = 0.0
+    candidates: list[RecognitionCandidateOut] = []
+    message: str = ""

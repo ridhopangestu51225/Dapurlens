@@ -13,5 +13,18 @@ export interface Food {
   steps: string[];
 }
 
+export type FoodInput = Omit<Food, "slug" | "emoji" | "gradientFrom" | "gradientTo">;
 
-export type Foodinput = Omit<Food, "slug" | "emoji" | "gradientFrom" | "gradientTo">;
+export interface RecognitionCandidate {
+  slug: string;
+  name: string;
+  confidence: number;
+}
+
+export interface RecognitionResult {
+  matched: boolean;
+  food: Food | null;
+  confidence: number;
+  candidates: RecognitionCandidate[];
+  message: string;
+}

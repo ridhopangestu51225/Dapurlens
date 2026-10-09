@@ -1,17 +1,18 @@
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from .auth import create_access_token, get_current_user, hash_password, verify_password
 from .models import Food, User
-from .schemas import FoodCreate, FoodOut, FoodUpdate, TokenOut, UserCreate, UserLogin, UserOut
+from .schemas import FoodCreate, FoodOut, FoodUpdate, RecognitionOut, TokenOut, UserCreate, UserLogin, UserOut
 
 from .database import get_db
 from .models import Food
 from .schemas import FoodCreate, FoodOut, FoodUpdate
 from .utils import slugify
+from .vision import recognize_food
 
 app = FastAPI(title="DapurLens API")
 
@@ -224,6 +225,56 @@ def get_me(current_user: User = Depends(get_current_user)):
     # mencari user. Dependency get_current_user yang sudah melakukan itu
     # (decode token -> cari user di DB) SEBELUM function ini jalan.
     return current_user
+
+@app.post("/api/vision/recognize", response_model=RecognitionOut)
+async def recognize(image: UploadFile, db: Session = Depends(get_db)):
+    # Tolak file yang bukan gambar SEBELUM memanggil API berbayar.
+    if not image.content_type or not image.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File harus berupa gambar")
+
+    image_bytes = await image.read()
+
+    # Daftar resep diambil dari database SAAT ITU JUGA, bukan daftar statis.
+    # Jadi kalau teman kamu import resep baru lewat Excel, fitur pindai
+    # otomatis ikut "tahu" resep baru itu tanpa ubah kode.
+    known_foods = [{"slug": f.slug, "name": f.name} for f in db.query(Food).all()]
+
+    if not known_foods:
+        raise HTTPException(status_code=503, detail="Belum ada data resep di database untuk dicocokkan")
+
+    try:
+        result = recognize_food(image_bytes, image.content_type, known_foods)
+    except Exception as exc:
+        # Pesan di response dibuat rapi untuk user, tapi detail aslinya
+        # tetap dicetak ke terminal backend supaya bisa di-debug.
+        print(f"[vision] Gagal memanggil API recognition: {exc}")
+        raise HTTPException(status_code=502, detail="Gagal memproses gambar, coba lagi")
+
+    best_slug = result.get("best_match_slug")
+    confidence = result.get("confidence", 0.0)
+
+    if not best_slug or confidence < 0.4:
+        # Confidence rendah: siapkan alternatif (FR-7 di proposal).
+        candidates = []
+        for alt in result.get("alternatives", []):
+            food = db.query(Food).filter(Food.slug == alt.get("slug")).first()
+            if food:
+                candidates.append(
+                    {"slug": food.slug, "name": food.name, "confidence": alt.get("confidence", 0.0)}
+                )
+        return RecognitionOut(
+            matched=False,
+            confidence=confidence,
+            candidates=candidates,
+            message="Tidak yakin dengan hasilnya. Berikut beberapa kemungkinan:" if candidates
+            else "Makanan tidak dikenali. Coba foto dari sudut lain atau pencahayaan lebih baik.",
+        )
+
+    food = db.query(Food).filter(Food.slug == best_slug).first()
+    if not food:
+        return RecognitionOut(matched=False, confidence=0.0, message="Makanan tidak dikenali")
+
+    return RecognitionOut(matched=True, food=_to_food_out(food), confidence=confidence)
 
 @app.get("/api/health")
 def health_check():

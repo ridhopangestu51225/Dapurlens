@@ -1,9 +1,29 @@
-import { Food, FoodInput } from "@/types/food";
+import { Food, FoodInput, RecognitionResult } from "@/types/food";
 import { AuthResponse, User } from "@/types/user";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 type ListParams = { tag?: string; q?: string };
+
+export async function recognizeFood(file: File): Promise<RecognitionResult> {
+  // FormData = cara standar browser mengirim file lewat fetch (multipart/form-data).
+  // Sengaja TIDAK set header "Content-Type" manual -- browser otomatis
+  // menentukan boundary multipart yang benar; kalau diset manual malah
+  // sering salah dan gagal diparse di backend.
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`${API_URL}/api/vision/recognize`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Gagal memindai foto");
+  }
+  return res.json();
+}
 
 export async function getFoods(params: ListParams = {}): Promise<Food[]> {
   const url = new URL("/api/foods", API_URL);

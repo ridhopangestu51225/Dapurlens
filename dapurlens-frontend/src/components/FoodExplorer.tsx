@@ -52,23 +52,24 @@ export default function FoodExplorer({ foods }: Props) {
           DapurLens<span className="text-amber-300">.</span>
         </h1>
         {!loading && (
-  <div className="pt-1 text-right">
-    {user ? (
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-white/80">Halo, {user.name.split(" ")[0]}</span>
-        <button onClick={logout} className="text-xs font-bold text-amber-300">
-          Keluar
-        </button>
-      </div>
-    ) : (
-      <Link href="/login" className="text-xs font-bold text-amber-300">
-        Masuk
-      </Link>
-    )}
-  </div>
-)}
+          <div className="pt-1 text-right">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/80">Halo, {user.name.split(" ")[0]}</span>
+                <button onClick={logout} className="text-xs font-bold text-amber-300">
+                  Keluar
+                </button>
+              </div>
+            ) : (
+              <Link href="/login" className="text-xs font-bold text-amber-300">
+                Masuk
+              </Link>
+            )}
+          </div>
+        )}
         <p className="mb-5 text-sm text-white/80">Cari nama masakan, temukan resepnya</p>
 
+        {/* Input Pencarian dengan Tombol Akses Kamera Cepat */}
         <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-lg shadow-black/10">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-stone-400">
             <circle cx="11" cy="11" r="7" />
@@ -81,6 +82,13 @@ export default function FoodExplorer({ foods }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent text-sm text-stone-900 outline-none placeholder:text-stone-400"
           />
+          {/* Tombol Kamera di Baris Pencarian */}
+          <Link href="/pindai" className="shrink-0 text-stone-400 transition hover:text-[#C1272D]" aria-label="Pindai dari foto">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="7" width="14" height="12" rx="2" />
+              <path d="M17 10l4-2v9l-4-2" />
+            </svg>
+          </Link>
         </div>
       </div>
 
@@ -118,15 +126,23 @@ export default function FoodExplorer({ foods }: Props) {
           </div>
         )}
 
-        <div className="mt-6 flex items-start gap-2.5 rounded-2xl border border-dashed border-stone-300 bg-white p-3.5">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0 text-stone-400">
-            <rect x="3" y="7" width="14" height="12" rx="2" />
-            <path d="M17 10l4-2v9l-4-2" />
-          </svg>
-          <p className="text-xs leading-relaxed text-stone-500">
-            <span className="font-bold text-stone-800">Pindai dari foto</span> — fitur kamera (Modul Visi) untuk mengenali makanan langsung dari foto akan menyusul di tahap berikutnya.
-          </p>
-        </div>
+        {/* Banner Fitur Pindai dari Foto di Bagian Bawah */}
+        <Link
+          href="/pindai"
+          className="mt-6 flex items-center gap-2.5 rounded-2xl border border-[#C1272D]/20 bg-white p-3.5 transition hover:border-[#C1272D]/40"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C1272D]/10 text-[#C1272D]">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="7" width="14" height="12" rx="2" />
+              <path d="M17 10l4-2v9l-4-2" />
+            </svg>
+          </span>
+          <span className="flex-1">
+            <span className="block text-xs font-bold text-stone-900">Pindai dari foto</span>
+            <span className="block text-xs text-stone-500">Tidak tahu nama makanannya? Foto saja.</span>
+          </span>
+          <span className="text-xs font-bold text-[#C1272D]">&rarr;</span>
+        </Link>
       </div>
     </div>
   );

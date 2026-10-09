@@ -4,3 +4,5 @@ sqlalchemy
 psycopg2-binary
 bcrypt<4.1
 pyjwt
+anthropic
+python-multipart
